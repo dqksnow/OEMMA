@@ -1,0 +1,106 @@
+\usepackage{amsfonts,amsmath,amsthm,graphicx,float,subcaption,enumerate,
+  color,natbib,verbatim, hyperref, url}
+\usepackage{amssymb,enumitem}
+\usepackage{lscape,longtable}
+\usepackage[letterpaper, margin=1in]{geometry}
+\linespread{1.25}
+\graphicspath{{figures/}}
+% \setlength{\parindent}{0cm}
+\allowdisplaybreaks
+
+\newcommand{\calH}{\cal{H}}
+\def\calC{{\cal C}}            %
+\def\calJ{{\cal J}}
+\def\mma{{\mbox{\tiny\rm MMA}}}%
+\def\jma{{\mbox{\tiny\rm JMA}}}%
+
+\newcommand{\0}{\mathbf{0}}
+\newcommand{\1}{\mathbf{1}}
+\renewcommand{\H}{\mathbf{H}}
+\newcommand{\B}{\mathbf{B}}
+\newcommand{\I}{\mathbf{I}}
+\newcommand{\D}{\mathbf{D}}
+\newcommand{\e}{\mathbf{e}}
+% \newcommand{\m}{m}
+\renewcommand{\k}{\mathbf{k}}
+\newcommand{\M}{M}
+\renewcommand{\u}{\mathbf{u}}
+\renewcommand{\S}{\mathbf{S}}
+\newcommand{\U}{\mathbf{U}}
+\newcommand{\V}{\mathbf{V}}
+\newcommand{\w}{\mathbf{w}}
+\newcommand{\W}{\mathbf{W}}
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\X}{\mathbf{X}}
+\newcommand{\y}{\mathbf{y}}
+\newcommand{\Z}{\mathbf{Z}}
+\newcommand{\dm}{\dot{\m}}
+\newcommand{\ddm}{\ddot{\m}}
+\newcommand{\dM}{\dot{\M}}
+\newcommand{\ddM}{\ddot{\M}}
+\newcommand{\df}{\dot{f}}
+
+\newcommand{\bDelta}{\boldsymbol{\Delta}}
+\newcommand{\bGamma}{\boldsymbol{\Gamma}}
+\newcommand{\btheta}{\boldsymbol{\theta}}
+\newcommand{\bbeta}{\boldsymbol{\beta}}
+\newcommand{\bmu}{\boldsymbol{\mu}}
+\newcommand{\bOmega}{\boldsymbol{\Omega}}
+\newcommand{\bpi}{\boldsymbol{\pi}}
+
+\newcommand{\ttheta}{{\tilde{\boldsymbol{\theta}}}}
+\newcommand{\htheta}{{\hat{\boldsymbol{\theta}}}}
+\newcommand{\ctheta}{{\check{\boldsymbol{\theta}}}}
+\newcommand{\atheta}{{\acute{\boldsymbol{\theta}}}}
+
+\newcommand{\onen}{\frac{1}{n}}
+\newcommand{\oneN}{\frac{1}{N}}
+\newcommand{\onenr}{\frac{1}{nr}}
+\newcommand{\onepi}{\frac{1}{\pi_i}}
+\newcommand{\op}{o_P(1)}
+\newcommand{\opf}{o_{P|\Fn}(1)}
+\newcommand{\opfb}{o_{P|\Fn,\tilde\bbeta_0}(1)}
+\newcommand{\Op}{O_p(1)}
+\newcommand{\Opf}{O_{P|\Fn}(1)}
+\newcommand{\ud}{\mathrm{d}}
+% \newcommand{\wh}{\widehat}
+% \newcommand{\wt}{\widetilde}
+\newcommand{\Fn}{\mathcal{F}_N}
+\newcommand{\sumn}{\sum_{i=1}^{n}}
+\newcommand{\sumN}{\sum_{i=1}^{N}}
+\newcommand{\sumj}{\sum_{j=1}^p}
+\newcommand{\partiald}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\tp}{^{\rm T}}
+\newcommand{\tr}{\mathrm{tr}}
+\newcommand{\cvp}{\xrightarrow{P}}
+\newcommand{\cvpf}{\xrightarrow{P|\Fn}}
+\newcommand{\cvpfb}{\xrightarrow{P|\Fn,\tilde\bbeta_0}}
+\newcommand{\cvd}{\xrightarrow{D}}
+\newcommand{\cvdf}{\overset{a}{\sim}}% {\xrightarrow{D|\Fn}}
+\renewcommand{\Pr}{\mathbb{P}}
+\newcommand{\Exp}{\mathbb{E}}
+\newcommand{\Nor}{\mathbb{N}}
+\newcommand{\Var}{\mathbb{V}}
+\newcommand{\mmse}{{\mathrm{mMSE}}}
+\newcommand{\mvc}{{\mathrm{mVc}}}
+
+\newtheorem{assumption}{Assumption}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{algorithm}{Algorithm}
+
+\theoremstyle{remark}
+\newtheorem*{remark}{{\bf Remark}}
+
+\newcommand{\red}{\color{red}}
+\newcommand{\blue}{\color{blue}}
+\newcommand{\boxit}[1]{\vbox{\hrule\hbox{\vrule\kern6pt\vbox{\kern6pt#1\kern6pt}\kern6pt\vrule}\hrule}}
+\newcommand{\why}[1]{{\vskip 2mm\boxit{\vskip 2mm{\color{blue}\bf#1} {\color{blue}\bf -- Haiying\vskip 2mm}}\vskip 2mm}}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-command-extra-options: "-shell-escape"
+%%% TeX-master: "main.tex"
+%%% End:
+
+%%% TeX-engine: xetex

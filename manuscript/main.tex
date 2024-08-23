@@ -1,0 +1,335 @@
+\documentclass[12pt,hidelinks]{article}
+\usepackage{natbib}
+\include{setup}
+
+\begin{document}
+\title{OEM FMA}
+\author{}
+\date{\today}
+\maketitle
+\begin{abstract}
+  OEM FMA fast calculation.
+\end{abstract}
+
+\section{Introduction}
+Use the OEM idea in \cite{Xiong2016} to calculate optimal weights in model averaging. 
+\section{Problem Statement}
+
+Let $(y_i,\x_i)$, $i=1,\cdots,n$ be a random sample, with $y_i$ being
+the responses and $\x_i=(x_{i1}, ..., x_{ip})^{\top}$ being the
+covariate vectors. Assume that the working model is the linear regression model:
+\begin{equation*}
+  y_i=\mu_i +e_i=\x_i^{\top}\bbeta+e_i=\sum_{j=1}^p\beta_jx_{ij} +e_i,
+\end{equation*}
+where $\bbeta = (\beta_1,\cdots ,\beta_p)^{\top}$ is the
+regression coefficient vector, $e_i$ are uncorrelated % heteroscedastic
+model errors such that
+$E(e_i|\x_i) =0$ and $E(e_i^2 |\x_i) =\sigma^2$. In matrix notation,
+\begin{equation}\label{model-matrix}
+  \y = \bmu+\e=\X\bbeta+\e,
+\end{equation}
+where $\y = (y_1,\cdots ,y_n)^{\top}$,
+$\bmu=(\mu_1,\cdots,\mu_n)^{\top}$,
+$\X=(\x_1, ..., \x_n)^{\top}$ is the $n\times p$
+predictor matrix, and $\e = (e_1,\cdots, e_n)^{\top}$.
+
+For model building with the $p$ predictor variables, there are up to
+$2^p$ candidate models to consider if one is unsure which variables
+should be included. The method of model averaging is to average all
+estimates from each individual candidate model. Often, not all $2^p$
+possible candidate models are included for averaging because $2^p$ may
+be large to handle, computationally and/or theoretically, e.g., the
+nested model structure \citep{Hansen:07, Hansen:12} only considered a
+small proportion of all the possible candidate models. Let $M$ be the
+number of candidate models to be considered for averaging. In
+traditional model averaging methods, it is typically assumed that
+$M\ll 2^p$. If all possible candidate models are included for
+averaging, then $M=2^p$. For $m\leq M$, let $\x_m$ be the predictors
+matrix corresponding to the $m$-th candidate model. The ordinary least
+square (OLS) estimator of $\bbeta$ is
+$\tilde{\bbeta}_m = (\x_m^{\top}\x_m)^{-1}\x_m^{\top}\y$, and the
+estimator of $\bmu$ from the $m$-th candidate is
+$\tilde\bmu_m=\x_m\tilde{\bbeta}_m$.  Let
+$\tilde{\w} = (\tilde{w}_1,\cdots,\tilde{w}_M)^{\top}$ be the weight
+vector in the unit simplex in $\mathbb{R}^M$:
+\begin{equation}\label{weight}
+  \tilde{\calH}^M=\left\{\tilde{w}_i\in [0,1]:
+    \sum_{m=1}^M \tilde{w}_m=1\right\}.
+\end{equation}
+A model averaging estimator of $\bmu$ is
+\begin{equation}\label{eq:2}
+  \tilde{\bmu}(\tilde\w) =
+\sum_{m=1}^M\tilde{w}_m\tilde\bmu_m.
+\end{equation}
+% =\sum_{m=1}^M\tilde{w}_m\x_m\tilde{\bbeta}_m$.
+
+To choose the weight vector $\tilde{\w}$, Mallows model averaging \citep{Hansen:07} and Jackknife model averaging \citep{Hansen:12} are commonly used and are proved to be optimal.
+Regardless of Mallows model averaging and Jackknife model averaging, the target function to optimize is a quadratic function of $\tilde{\w}$, for which the numerical solutions have been thoroughly studied and algorithms are widely available. For example, it can be solved by the quadprog package in the R language (R Development Core Team, 2016),  by qprog command in GAUSS, and by the quadprog command in MATLAB.
+However, when $p$ is not very small such that $2^p$ is large, it is computationally infeasible to minimize a criterion by quadratic programming. This restricts the applibility of frequentist model averaging. 
+ 
+Take the Mallows model averaging (MMA) \citep{Hansen:07} as an example. 
+% and Jackknife Model Averaging (JMA) \citep{Hansen:12}.
+The Mallows criterion is
+\begin{equation}\label{eq:3}
+\calC(\tilde{\w})=\|\hat{\bmu}(\tilde{\w})-\y\|^2+2\hat{\sigma}^2 \tilde{\w}^{\top}\k,
+\end{equation}
+where $\|\cdot\|^2$ is the Euclidean norm, $\k=(k_1, ..., k_M)\tp$, and $k_m$ is the number of covariate variables contained in the $m$th model. From (\ref{eq:3}), the weight vector based on MMA is obtained as
+\begin{equation*}
+  \tilde{\w}_{\mma}= \mathop{\arg\min}\nolimits_{\w \in\tilde{\calH}^M}{\calC}(\tilde{\w}).
+\end{equation*} 
+
+In this paper, we propose an EM type algorithm to calculate the MMA estimate. This method augment the covariate matrix $\X$ to an orthogonal matrix and then impute the corresponding responses iteratively. The major benefit of the orthogonalization is that we can reduce the dimension of the weight from $M$ to $p$, even when $M=2^p$. The rest of the paper is organized as follows... 
+
+\section{OEM FMA Algorithm}
+
+% let $\S$ be a $p\times p$ diagonal matrix with non-zero diagonal elements $s_1,\ldots,s_p$. Typical choices of $\S$ are $\S=\I$, i.e., $s_j=1$, or that $\S$ consists of sample standard deviations of each all covariates, i.e., $s_j^2=(n-1)^{-1}\sumn(x_{ij}-\bar{x}_j)^2$ with $\bar{x}_j=n^{-1}\sumn x_{ij}$. 
+
+% Define
+% \begin{equation}\label{zmat}
+% \Z=\X\S^{-1}.
+% \end{equation}
+For the covariate $\X$, let the eigenvalue decomposition of $\X\tp\X$ be $\X\tp\X=\V\tp\bGamma\V$, where $\V$ is an orthogonal matrix such that $\V\V=\I_p$, and $\bGamma=\mathrm{diag}\{\gamma_1,\cdots\gamma_p\}$ is a diagonal matrix. Without loss of generality, assume that $\gamma_1\geqslant\cdots\geqslant\gamma_p$.
+
+Denote
+\begin{equation}\label{t}
+t=\#\{j:\ \gamma_j=\gamma_1,\ j=1,\ldots,p\},
+\end{equation}
+i.e., $t$ is the number of the $\gamma_j$ that equal the largest eigenvalue. 
+Define
+\begin{equation}
+\B={\mathrm{diag}}(\gamma_1 -\gamma_{t+1}, \ldots, \gamma_1-\gamma_p)\label{B}
+\end{equation} and
+\begin{equation}\label{orth}
+\bDelta=\B^{1/2}\V_1,
+\end{equation} where
+$\V_1$ is the submatrix of $\V$ consisting of the last $p-t$ rows. Let $\U=(\X\tp,\bDelta\tp)\tp$. We have
+\begin{align}
+  \U\tp\U
+  &=\X\tp\X+\bDelta\tp\bDelta
+  =\V\tp\bGamma\V+\V_1\tp\B\V_1\\
+  &=\V\tp\bGamma\V+\V\tp
+    \begin{pmatrix}
+      \0 & \0\\ \0 & \B
+    \end{pmatrix}
+    \V
+  =\gamma_1\I_p.
+\end{align}
+Thus, $\U$ is column orthogonal. Note that in (\ref{orth}) $\bDelta$ has $p-t$ rows. It does not rely on the number of rows $n$ in $\X$, and only $p-t$ rows are needed to make it orthogonal.
+
+% {\red I think the key of the following algorithm is the way to impute $\y_{\mathrm{miss}}$. Different ways of imputing method result in different FMA weights. If $\y_{\mathrm{I}}(\tilde\w) = \sum_{m=1}^M\tilde{w}^{(0)}_m\bDelta_m\hat\bbeta_m$ is used, the resulting weight should converge to the optimal weight. However, this requires to go over all candidate models, so it may not have any benefit in computational time.  It might be interesting to investigate other way of imputation, such as using $\y_{\mathrm{I}}(\tilde\w) = \bDelta\hat\bbeta$. }
+
+Denote
+\begin{equation}\label{Yc}
+  \y_c=(\y\tp,\ \y_{\mathrm{miss}}\tp)\tp.
+\end{equation}
+If $\y_c$ is fully observed, find the wight for model averaging can be greatly simplified; the dimension of the weight can be reduced from $M$ to $p$. To see this, note that
+\begin{equation}\label{eq:1}
+  \tilde{{\bmu}}_c =
+  \sum_{m=1}^M\tilde{w}_m\hat{\bmu}_m^c
+  =\sum_{m=1}^M\tilde{w}_m\sum_{j\in S_m}\u_{(j)}\hat{\beta}_j
+  =\sum_{j=1}^p\bigg\{\sum_{m=1}^M
+  \tilde{w}_mI_{S_m}(j)\bigg\}\u_{(j)}\hat{\beta}_j
+  =\sum_{j=1}^pw_j\hat\bmu_j,
+\end{equation}
+where $w_j=\sum_{m=1}^M\tilde{w}_mI_{S_m}(j)\in[0,1]$; and 
+% Note that for
+% \begin{equation}\label{eq:2}
+%   \tilde{{\bmu}}(\tilde\w) =
+% \sum_{m=1}^M\tilde{w}_m\tilde\bmu_m,
+% \end{equation}
+for the MMA criterion
+\begin{align}\label{M-criterion}
+  \calC(\tilde{\w})
+  &=\|\tilde{\bmu}_c(\tilde{\w})-\y_c\|^2+2\hat{\sigma}^2 \tilde{\w}^{\top}\k\\
+  % &=\|\sum_{m=1}^M\tilde{w}_m\tilde\bmu_m^c-\y_c\|^2
+  %   +2\hat{\sigma}^2\tilde{\w}^{\top}\k\\
+  &=\|\sum_{j=1}^pw_j\hat{\bmu}_j-\y_c\|^2
+    +2\hat{\sigma}^2\sum_{m=1}^M\tilde{w}_mk_m\\
+  &=\|\sum_{j=1}^pw_j\hat{\bmu}_j-\y_c\|^2
+    +2\hat{\sigma}^2\sum_{m=1}^M\tilde{w}_m\sum_{j=1}^pI_{S_m}(j)\\
+  &=\|\sum_{j=1}^pw_j\hat{\bmu}_j-\y_c\|^2
+    +2\hat{\sigma}^2\sumj \sum_{m=1}^M \tilde{w}_mI_{S_m}(j)\\
+  &=\|\sum_{j=1}^pw_j\hat{\bmu}_j-\y_c\|^2
+    +2\hat{\sigma}^2\sumj w_j\\
+  &=\|\sum_{j=1}^pw_j\hat{\bmu}_j-\y_c\|^2
+    +2\hat{\sigma}^2\w^{\top}\1
+    \equiv\calC(\w).
+\end{align}
+  % \begin{align}
+  %   \w^{\top}\1=\sumj w_j
+  %   &=\sumj \sum_{m=1}^M \tilde{w}_mI_{S_m}(j)\\
+  %   &=\sum_{m=1}^M\tilde{w}_m\sum_{j=1}^pI_{S_m}(j)
+  %     =\sum_{m=1}^M\tilde{w}_mk_m
+  %     =\tilde{\w}^{\top}\k
+  % \end{align}
+
+% for the MMA criterion
+% \begin{align}\label{M-criterion}
+%   \calC(\tilde{\w})
+%   &=\|\tilde{\bmu}_c(\tilde{\w})-\y_c^{(k-1)}\|^2+2\hat{\sigma}^2 \tilde{\w}^{\top}\k\\
+%   &=\|\sum_{m=1}^M\tilde{w}_m\tilde\bmu_m-\y_c^{(k-1)}\|^2
+%     +2\hat{\sigma}^2\tilde{\w}^{\top}\k\\
+%   &=\|\sum_{j=1}^p\bigg\{\sum_{m=1}^M
+%   \tilde{w}_mI_{S_m}(j)\bigg\}\bmu_j-\y_c^{(k-1)}\|^2
+%     +2\hat{\sigma}^2\tilde{\w}^{\top}\k\\
+%   &=\|\sum_{j=1}^pw_j\bmu_j-\y_c^{(k-1)}\|^2
+%     +2\hat{\sigma}^2{\w}^{\top}\1.
+% \end{align}
+Note that
+\begin{equation}
+  \min\nolimits_{\w \in\mathcal{H}}{\calC}(\w)
+  \le \min\nolimits_{\tilde{\w} \in\mathcal{\tilde{H}}}{\calC}(\tilde{\w}),
+\end{equation}
+This motivate the following algorithm.
+
+\subsection{Algorithm based on MMA}
+\begin{enumerate}
+\item Calculate $\bDelta=\B^{1/2}\V_1$ as in \eqref{orth}, and obtain $\U=(\X\tp,\bDelta\tp)\tp$. Impute $\y_{\mathrm{miss}}$ in (\ref{Yc}) by
+$\y_{\mathrm{I}}^{(0)} = \bDelta\hat\bbeta$, and obtain $\y_c^{(0)}=(\y\tp,\ (\y_{\mathrm{I}}^{(0)})\tp)\tp$.
+
+\item For $k=1, 2, ...$, obtain $\w^{(k)}$ by 
+
+\begin{equation*}
+  {\w}_{\mma}^{(k)}= \mathop{\arg\min}\nolimits_{\w \in\mathcal{H}}{\calC}^{(k)}(\w),
+\end{equation*}
+where 
+\begin{align}\label{M-criterion}
+  \calC^{(k)}(\w)
+  &=\|\hat{\bmu}(\w)-\y_c^{(k-1)}\|^2+2\hat{\sigma}^2 \w^{\top}\1.
+\end{align}
+
+\item Imputes $\y_{\mathrm{miss}}$ in (\ref{Yc}) by
+  $\y_{\mathrm{I}}^{(k)}=\sum_{j=1}^p{w}^{(k)}_j\Delta_j\hat\beta_j$, and
+  obtain $\y_c^{(k)}=\{\y\tp,\ (\y_{\mathrm{I}}^{(k)})\tp\}\tp$.
+
+{\red
+Here, $\hat\beta_j$'s in
+$\y_{\mathrm{I}}^{(k)}=\sum_{j=1}^p{w}^{(k)}_j\Delta_j\hat\beta_j$ depend on
+${\w}^{(k)}$ through $\y_{\mathrm{I}}^{(k)}$. There are two different ways to
+address it.
+
+(a) One way is to use $\y_{\mathrm{I}}^{(k-1)}$ to calculate
+$\hat\beta_j$'s. (I feel you used this.)
+
+(b) The other way is to solve a linear
+equation. Note that
+\begin{equation}
+  \hat\beta_j^{(k)}
+  =(\u_{(j)}\tp\u_{(j)})^{-1}\u_{(j)}\tp\y_c^{(k)}
+  =\gamma_1^{-1}\u_{(j)}\tp\y_c^{(k)}.
+  =\gamma_1^{-1}\Delta_j\tp\y+\gamma_1^{-1}\x_j\tp\y_{\mathrm{I}}^{(k)}.
+\end{equation}
+We have
+\begin{align}
+  \y_{\mathrm{I}}^{(k)}
+  &=\sum_{j=1}^p{w}^{(k)}_j\Delta_j\hat\beta_j^{(k)}
+  % =\gamma_1^{-1}\sum_{j=1}^p{w}^{(k)}_j\Delta_j
+  % \u_{(j)}\tp\y_c^{(k)}\\
+  =\gamma_1^{-1}\sum_{j=1}^p{w}^{(k)}_j\Delta_j\Delta_j\tp\y
+    +\gamma_1^{-1}\sum_{j=1}^p{w}^{(k)}_j\Delta_j\x_j\tp\y_{\mathrm{I}}^{(k)}.
+\end{align}
+Thus,
+\begin{align}
+  \y_{\mathrm{I}}^{(k)}
+  &=\left\{\gamma_1\I-\sum_{j=1}^p{w}^{(k)}_j
+    \Delta_j\Delta_j\tp\right\}^{-1}
+    \sum_{j=1}^p{w}^{(k)}_j\Delta_j\x_j\tp\y
+\end{align}
+}
+
+\item The second and third steps iterate until convergence.
+\end{enumerate}
+
+{\blue
+\begin{align}
+  Q(\w^{(k+1)}|\w^{(k)})
+  =&\bigg\|\y-\gamma_1^{-1}\sum_{j=1}^p{w}^{(k+1)}_j\x_j\x_j\tp\y
+    -\gamma_1^{-1}\sum_{j=1}^p{w}^{(k+1)}_j
+     \x_j\Delta_j\tp\y_{\mathrm{I}}^{(k)}\bigg\|^2
+  +2\hat{\sigma}^2\1^{\top}\w^{(k+1)}
+\end{align}
+Does iteratively minimizing $Q(\w^{(k+1)}|\w^{(k)})$ minimizes the following function?
+\begin{align}
+  &\bigg\|\y-\gamma_1^{-1}\sum_{j=1}^pw_j\x_j\x_j\tp\y
+    -\gamma_1^{-1}\sum_{j=1}^pw_j\x_j\Delta_j\tp\y_{\mathrm{I}}\bigg\|^2
+    +2\hat{\sigma}^2\1^{\top}\w\\
+  =&\bigg\|\y-\gamma_1^{-1}\sum_{j=1}^pw_j\x_j\x_j\tp\y
+     -\gamma_1^{-1}\sum_{j=1}^pw_j\x_j\Delta_j\tp
+     \bigg\{\gamma_1\I-\sum_{j=1}^pw_j
+    \Delta_j\Delta_j\tp\bigg\}^{-1}
+    \sum_{j=1}^pw_j\Delta_j\x_j\tp\y\bigg\|^2
+    +2\hat{\sigma}^2\1^{\top}\w
+\end{align}
+}
+
+\why{For JMA, the criterion under the original covariates does not equal to that
+under the augmented covariates, so the algorithm may not converge to the same
+solution. However, I feel that the optimality should still hold. You can ignore
+the following materials at this point.}
+
+\subsection{Algorithm based on JMA}
+
+Let $\H_j=\u_{(j)}\u_{(j)}^{\top}$, and
+$h_{j,ii}$ be the $i$th diagonal element of $\H_j$, that is, $h_{j,ii}=u_{ij}^2$.
+Define $\D_j$ to be the diagonal matrix with $(1-h_{j,ii})^{-1}$ being its $i$th
+diagonal element, and let
+$\H^\jma_{j} = \D_j(\H_j - \I_n) + \I_n$
+and
+ $\H^\jma(\w)=\sum_{j=1}^p w_j\H^\jma_j$.
+Following \cite{Hansen:12}, the Jackknife criterion is
+\begin{equation}\label{J-criterion}
+\calJ(\w)=\|\H^\jma(\w)\y-\y\|^2.
+\end{equation}
+From (\ref{J-criterion}), the weight vector based on JMA is obtained as
+\begin{equation*}
+  \hat{\w}_{\jma}
+  =\mathop{\arg\min}\nolimits_{\w\in\mathcal{H}}{\calJ}(\w).
+\end{equation*}
+
+
+Let $\H_m=\X_m(\X_m\tp\X_m)^{-1}\X_m\tp=\sum_{j=1}^pI_{S_m}(j)\u_j\u_j\tp$, and $h_{m,ii}$ be the $i$th
+diagonal element of $\H_m$, that is, $h_{m,ii}=\sum_{j=1}^pI_{S_m}(j)u_{ij}^2$.  Define
+$\D_j$ to be the diagonal matrix with $\{1-h_{m,ii})^{-1}=(1-\sum_{j=1}^pI_{S_m}(j)u_{ij}^2\}^{-1}$ being its
+$i$th diagonal element, and let
+$\H^\jma_{m} = \D_m(\H_m - \I_n) + \I_n$ and
+$\H^\jma(\w)=\sum_{m=1}^M \tilde{w}_m\H^\jma_m$.  Following \cite{Hansen:12},
+the Jackknife criterion is
+\begin{align}\label{J-criterion}
+  \calJ(\w)
+  &=\|\H^\jma(\w)\y-\y\|^2\\
+  &=\|\sum_{m=1}^M \tilde{w}_m\H^\jma_m\y-\y\|^2\\
+  &=\|\sum_{m=1}^M \tilde{w}_m\{\D_m(\H_m - \I_n) + \I_n\}\y-\y\|^2\\
+  &=\|\sum_{m=1}^M \tilde{w}_m\{\D_m[\sum_{j=1}^pI_{S_m}(j)\u_j\u_j\tp - \I_n] + \I_n\}\y-\y\|^2\\
+  &\approx\|\sum_{m=1}^M \tilde{w}_m\{\D_m(\H_m - \I_n) + \I_n\}\y-\y\|^2\\
+\end{align}
+
+From (\ref{J-criterion}), the weight vector based on JMA is obtained as
+\begin{align*}
+  \hat{\w}_{\jma}
+  =\mathop{\arg\min}\nolimits_{\w\in\mathcal{H}}{\calJ}(\w)
+\end{align*}
+
+Let $\H_j=\u_{(j)}\u_{(j)}^{\top}$, and
+$h_{j,ii}$ be the $i$th diagonal element of $\H_j$, that is, $h_{j,ii}=u_{ij}^2$.
+Define $\D_j$ to be the diagonal matrix with $(1-h_{j,ii})^{-1}$ being its $i$th diagonal element, and let
+$\H^\jma_{j} = \D_j(\H_j - \I_n) + \I_n$
+and
+ $\H^\jma(\w)=\sum_{j=1}^p w_j\H^\jma_j$.
+Following \cite{Hansen:12}, the Jackknife criterion is
+\begin{equation}\label{J-criterion}
+\calJ(\w)=\|\H^\jma(\w)\y-\y\|^2.
+\end{equation}
+From (\ref{J-criterion}), the weight vector based on JMA is obtained as
+\begin{equation*}
+  \hat{\w}_{\jma}
+  =\mathop{\arg\min}\nolimits_{\w\in\mathcal{H}}{\calJ}(\w).
+\end{equation*}
+
+\section{Theoretical properties}
+
+\section{Numerical results}
+
+\bibliography{ref}
+\bibliographystyle{natbib}
+
+\end{document}
