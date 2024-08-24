@@ -2,10 +2,17 @@
 .Rhistory
 .RData
 .Ruserdata
-src/*.o
-src/*.so
-src/*.dll
-.DS_Store
 *.Rcheck/
-*.tar.gz
 *.Rproj
+.DS_Store
+
+# LaTeX files from /manuscript
+manuscript/*.aux
+manuscript/*.bbl
+manuscript/*.blg
+manuscript/*.log
+manuscript/*.out
+manuscript/*.fls
+manuscript/*.fdb_latexmk
+manuscript/*.synctex.gz
+manuscript/*.pdf
